@@ -293,7 +293,7 @@ class Pipeline(object):
                 game_state = self._flatten_dict(game_state)
                 team_state = self._flatten_dict(team_state)
 
-            # print(len(game_state), len(team_state))
+            print(len(game_state), len(team_state))
             processed_pbp.append(
                 {
                     'overview': game_state,
@@ -366,7 +366,7 @@ class Pipeline(object):
                 continue
 
 
-    def load_dataset(self, batch_size: int = 100):
+    def load_dataset(self, batch_size: int = 100, dataset_name: str = 'batch_50'):
 
         dataset_dir = os.path.join(DATA_DIR, 'dataset')
         X, y = [], []
@@ -388,21 +388,50 @@ class Pipeline(object):
             y.append(away_y)
 
             if (i + 1) % batch_size == 0:
-                output_file = os.path.join(DATA_DIR, 'XY', f'batch_{i // batch_size + 1}.pkl')
+                output_file = os.path.join(DATA_DIR, 'XY', dataset_name, f'batch_{i // batch_size + 1}.pkl')
                 with open(output_file, 'wb') as f:
                     pickle.dump({'X': X, 'y': y}, f)
                 X, y = [], []
 
         if len(X) > 0:
-            output_file = os.path.join(DATA_DIR, 'XY', f'batch_{i // batch_size + 1}.pkl')
+            output_file = os.path.join(DATA_DIR, 'XY', dataset_name, f'batch_{i // batch_size + 1}.pkl')
             with open(output_file, 'wb') as f:
                 pickle.dump({'X': X, 'y': y}, f)
         return
 
 
+    def load_autoencoder_dataset(self, dataset_name: str = 'batch_50', n_features: int = 830):
+        data_dir = os.path.join(DATA_DIR, 'XY', dataset_name)
+        for file in tqdm(os.listdir(data_dir)):
+            batch_idx = int(file.split('_')[1].split('.')[0])
+
+            output_file = os.path.join(DATA_DIR, 'XY', 'autoencoder', f'batch_{batch_idx}.pkl')
+            if os.path.exists(output_file):
+                continue
+            if not file.endswith('.pkl'):
+                continue
+            X = []
+            with open(os.path.join(data_dir, file), 'rb') as f:
+                data = pickle.load(f)
+            for x in data['X']:
+                for p in x:
+                    t = p['teams']
+                    if len(t) != n_features:
+                        continue
+                   
+                    X.append(t)
+            
+            X = np.array(X)
+            with open(output_file, 'wb') as f:
+                pickle.dump(X, f)
+
+
 if __name__ == '__main__':
 
     pipeline = Pipeline()
-    dataset = pipeline.load_dataset()
-
-
+    # dataset = pipeline.load_dataset()
+    # pipeline.process_season('2019-20')
+    # dataset = pipeline.load_autoencoder_dataset()
+    # dataset = pipeline.load_dataset(batch_size=50, dataset_name='batch_50')
+    # pipeline.load_autoencoder_dataset(dataset_name='batch_50')
+    pipeline.load_autoencoder_dataset(dataset_name='batch_50')

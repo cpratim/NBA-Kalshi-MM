@@ -98,7 +98,7 @@ class NBAAPI(object):
             except Exception as e:
                 print(f"{game_id} - error")
                 continue
-            time.sleep(2 + random.uniform(0, 1))
+            time.sleep(5 + random.uniform(0, 1))
 
 
     def parse_raw_game_boxscore(self, game_id: str):
