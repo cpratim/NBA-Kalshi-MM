@@ -20,12 +20,12 @@ class PBP(object):
         self.settings = settings = {
             "dir": CACHE_DIR,
             "Boxscore": {
-                "source": "web", 
-                "data_provider": "data_nba"
+                "source": "file", 
+                "data_provider": "stats_nba"
             },
             "Possessions": {
-                "source": "web", 
-                "data_provider": "data_nba"
+                "source": "file", 
+                "data_provider": "stats_nba"
             },
         }
         self.record_stats = [
@@ -56,13 +56,12 @@ class PBP(object):
 
 
     def build_game_dataset(self, game_id: str):
-        
-
         player_states = {}
         
         dataset = []
         game = self.client.Game(game_id)
 
+        # print(dir(game))
         home_team, away_team = game.boxscore.data['team']
         home_team_id, away_team_id = (
             home_team['team_id'],
@@ -108,11 +107,9 @@ class PBP(object):
                     'seconds_since_previous_event': event.seconds_since_previous_event,
                 }
                 current_players = event.current_players
-                for team, players in current_players.items():
-
-                    # print(len(players))
-                    if len(players) != 5:
-                        print(len(players))
+                # for team, players in current_players.items():
+                #     if len(players) != 5:
+                #         print(len(players))
                 
                 for team, players in current_players.items():
                     for player in players:
@@ -340,28 +337,34 @@ class PBP(object):
     def _process_replay(self, event: Replay, game_state: dict, period_state: dict, player_states: dict, player_team_map: dict):
         return game_state
 
-
     def build_season_pbp(self, season: str):
 
         game_ids = get_season_game_ids(season)
+        existing = os.listdir(os.path.join(DATA_DIR, 'pbp'))
+        existing = [file.replace('.json', '') for file in existing]
+        existing = [game_id for game_id in existing if game_id in game_ids]
+        print(f'Total existing pbp: {len(existing)} / {len(game_ids)}')
         for game_id in tqdm(game_ids):
-            output_file = os.path.join(DATA_DIR, 'pbp', f'{game_id}.json')
-            if os.path.exists(output_file):
+            if game_id in existing:
                 continue
-            # try:
-            pbp = self.build_game_dataset(game_id)
-            with open(output_file, 'w') as f:
-                json.dump(pbp, f, indent=4)
-            sleep(.5)
-            # except Exception as e:
-            #     print(f"{game_id} - error")
-            #     continue
-            # break
+            try:
+                pbp = self.build_game_dataset(game_id)
+                with open(os.path.join(DATA_DIR, 'pbp', f'{game_id}.json'), 'w') as f:
+                    json.dump(pbp, f, indent=4)
+                # sleep(.5)
+            except Exception as e:
+                # print(e)
+                # print(f"{game_id} - error")
+                continue
         return
+
 
 if __name__ == "__main__":
 
     pbp = PBP()
-    pbp.build_season_pbp('2016-17')
+    for season in ['2024-25', '2023-24', '2022-23', '2021-22', '2020-21', '2019-20', '2018-19', '2017-18', '2016-17']:
+        print(f'Processing {season}...')
+        pbp.build_season_pbp(season)
+    # pbp.build_season_pbp('2019-20')
     # pbp.build_game_dataset('0022200012')
     # print(len(os.listdir('/Users/cpratim/Documents/nba-kalshi-mm/data/pbp')))

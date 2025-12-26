@@ -24,4 +24,7 @@ class Autoencoder(nn.Module):
         x = self.decoder(x)
         return x
 
+
+
         
+

@@ -98,7 +98,7 @@ class NBAAPI(object):
             except Exception as e:
                 print(f"{game_id} - error")
                 continue
-            time.sleep(1 + random.uniform(0, 1))
+            time.sleep(2 + random.uniform(0, 1))
 
 
     def parse_raw_game_boxscore(self, game_id: str):
@@ -236,5 +236,8 @@ class NBAAPI(object):
 if __name__ == "__main__":
     nba_api = NBAAPI()
     # nba_api.process_season('2016-27')
-    nba_api.get_season_raw_game_boxscores('2021-22')
-    # nba_api.process_season('2024-25')
+
+    for season in ['2024-25', '2023-24', '2022-23', '2021-22', '2020-21', '2019-20', '2018-19', '2017-18', '2016-17']:
+        print(f'Processing {season}...')
+        nba_api.get_season_raw_game_boxscores(season)
+        # nba_api.process_season(season)
